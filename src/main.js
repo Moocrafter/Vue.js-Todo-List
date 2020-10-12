@@ -13,7 +13,7 @@ var dbItems = [];
 (async function() {
   var data = await db.items.toArray();
   for (var i in data) {
-    dbItems[dbItems.length] = data[i].data;
+    dbItems[dbItems.length] = data[i].htmlEncodedText;
   }
 })().then(() => {
   new Vue({

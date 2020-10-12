@@ -1,4 +1,10 @@
 <style>
+html,
+body {
+  min-height: 100%;
+  padding: 0;
+  margin: 0;
+}
 #titleDiv {
   width: 100%;
   border-bottom: 5px solid gray;
@@ -67,30 +73,36 @@
       </div>
       <div id="addItemDiv" class="noselect">
         <input
-          style="width: calc(100% - 36.101083032490976vw); margin-left: 10px; display: inline;"
+          style="
+            width: calc(100% - 36.101083032490976vw);
+            margin-left: 10px;
+            display: inline;
+          "
           placeholder="Enter a item for the todo list"
           id="itemInput"
-        >
+        />
         &nbsp;
         <div
-          style="display: inline; border: 2px solid green; padding: 1px;"
+          style="display: inline; border: 2px solid green; padding: 1px"
           class="noselect"
           id="itemAdd"
           v-on:click="addItem()"
-        >Add Item</div>
+        >
+          Add Item
+        </div>
       </div>
-      <div
-        id="toolTip"
-        class="toolTip"
-        style="
-  display: none;"
-      >You can't add more than one item of the same name!</div>
+      <div id="toolTip1" class="toolTip" style="display: none">
+        You can't add more than one item of the same name!
+      </div>
+      <div id="toolTip2" class="toolTip" style="display: none">
+        You can't add a blank item!
+      </div>
     </div>
     <div
-      style="width: auto; postion: absolute; bottom: 10px; overflow-y: scroll;"
+      style="width: auto; postion: absolute; bottom: 10px; overflow-y: scroll"
       id="todoListBody"
     >
-      <TodoList :items="items" :db="db" :key="componentKey"/>
+      <TodoList :items="items" :db="db" :key="componentKey" />
     </div>
 
     <div id="bottomBorder"></div>
@@ -103,11 +115,11 @@ import TodoList from "./components/TodoList";
 export default {
   name: "App",
   components: {
-    TodoList
+    TodoList,
   },
   data() {
     return {
-      componentKey: true
+      componentKey: true,
     };
   },
   props: ["items", "db"],
@@ -116,39 +128,62 @@ export default {
       // Get the input field
       var input = document.getElementById("itemInput");
 
+      if (input.value.length == 0) {
+        //Show tooltip
+        document.getElementById("toolTip2").style.display = "";
+        setTimeout(() => {
+          document.getElementById("toolTip2").style.display = "none";
+        }, 3500);
+
+        //Prevent adding item
+        return;
+      }
+
       var hasMatch = false;
       for (var item in this.items) {
-        if (this.items[item] === input.value) {
+        //Debug code
+        console.log(`Existing Item is: ${this.items[item]} Input value is: ${this.htmlEncode(input.value).replace(/&#32;/g,"&nbsp;")}`);
+
+        //Compare if exsiting items are the same as the one to be added
+        if (this.items[item] === this.htmlEncode(input.value).replace(/&#32;/g, "&nbsp;")) {
           hasMatch = true;
           break;
         }
       }
 
+      //If there was a match then show the tool tip otherwise add the item
       if (hasMatch) {
-        document.getElementById("toolTip").style.display = "";
+        document.getElementById("toolTip1").style.display = "";
         setTimeout(() => {
-          document.getElementById("toolTip").style.display = "none";
+          document.getElementById("toolTip1").style.display = "none";
         }, 3500);
       } else {
-        this.$set(this.items, this.items.length, this.htmlEncode(input.value).replace(/&#32;/g, '&nbsp;'));
-        this.db.items.add({ data: this.htmlEncode(input.value).replace(/&#32;/g, '&nbsp;') });
-        this.forceRerender();
+        //Define a var for the encoded text
+        let htmlEncodedText = this.htmlEncode(input.value).replace(/&#32;/g,"&nbsp;");
 
-        console.log(this.items.toString());
+        this.$set(this.items, this.items.length, htmlEncodedText);
+
+        //Add item to the db
+        this.db.items.add({
+          htmlEncodedText,
+        });
+
+        //Rerender the componets to update the "Vue"
+        this.forceRerender();
       }
     },
     htmlEncode(str) {
       var buf = [];
 
-      for (var i=str.length-1;i>=0;i--) {
-        buf.unshift(['&#', str[i].charCodeAt(), ';'].join(''));
+      for (var i = str.length - 1; i >= 0; i--) {
+        buf.unshift(["&#", str[i].charCodeAt(), ";"].join(""));
       }
 
-      return buf.join('');
+      return buf.join("");
     },
     forceRerender() {
       this.componentKey = !this.componentKey;
-    }
-  }
+    },
+  },
 };
 </script>
